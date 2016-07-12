@@ -14,7 +14,7 @@ import rx.subjects.PublishSubject;
  * Store implementation for the default store
  *
  * @param <S> State's class
- * @param <T> Action type's class
+ * @param <A> Action's class
  */
 public class StoreImpl<S extends State, A extends Action> implements Store<S, A> {
   private final PublishSubject<S> stateSubject = PublishSubject.create();
@@ -30,29 +30,36 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
    *
    * @param <S> State's class
    * @param rootReducer Root reducer
+   * @param initialState Initial state for the store
+   * @param initialAction Initial action to dispatch upon subscription
    * @param middlewares Middlewares  @return A Store with the given configuration
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
-      S initialState, List<Middleware<S, A>> middlewares) {
-    return new StoreImpl<S, A>(rootReducer, initialState, new IOToIOSchedulerTransformer(),
+      S initialState, A initialAction, List<Middleware<S, A>> middlewares) {
+    return new StoreImpl<S, A>(rootReducer, initialState, initialAction,
+        new IOToIOSchedulerTransformer(),
         middlewares);
   }
 
   /**
-   * Same as {@link #create(Reducer, State, List)} but adds no middleware
+   * Same as {@link #create(Reducer, State, Action, List)} but adds no middleware
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
-      S initialState) {
-    return new StoreImpl<S, A>(rootReducer, initialState, new IOToIOSchedulerTransformer(),
+      S initialState, A initialAction) {
+    return new StoreImpl<S, A>(rootReducer, initialState, initialAction,
+        new IOToIOSchedulerTransformer(),
         new ArrayList<Middleware<S, A>>());
   }
 
-  public StoreImpl(Reducer<S, A> rootReducer, S initialState, SchedulerTransformer transformer,
+  public StoreImpl(Reducer<S, A> rootReducer, S initialState, A initialAction,
+      SchedulerTransformer transformer,
       List<Middleware<S, A>> middlewares) {
     this.rootReducer = rootReducer;
     this.transformer = transformer;
     this.currentState = initialState;
     this.middlewares = middlewares;
+
+    dispatch(initialAction);
   }
 
   public void dispatch(final A action) {
