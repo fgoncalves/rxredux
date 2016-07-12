@@ -19,13 +19,15 @@ import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyAction;
 import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyState;
 import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyStore;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StoreImplTest {
-
+  @Mock
+  Action<Integer> initialAction;
   @Mock
   Reducer<State, Action<Integer>> rootReducer;
   @Mock
@@ -41,7 +43,7 @@ public class StoreImplTest {
 
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
-            mock(Action.class), new ImmediateToImmediateScheduler(),
+            initialAction, new ImmediateToImmediateScheduler(),
             Collections.singletonList(middleware));
     testSubscriber = new TestSubscriber<State>();
     testSubscription = store.subscribe(testSubscriber);
@@ -146,5 +148,10 @@ public class StoreImplTest {
     inOrder.verify(action).setType(123);
     inOrder.verify(action).setType(456);
     inOrder.verify(action).setType(789);
+  }
+
+  @Test
+  public void create_shouldDispatchInitialAction() {
+    verify(rootReducer).reduce(eq(initialAction), anyState());
   }
 }
