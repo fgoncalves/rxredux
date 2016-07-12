@@ -90,9 +90,15 @@ public class StoreImplTest {
 
   @Test
   public void create_shouldCreateAStoreWithTheGivenInitialState() {
-    State initialState = mock(State.class);
+    State initialState = new State();
     Store<State, Action<Integer>> store =
         StoreImpl.create(rootReducer, initialState, mock(Action.class));
+
+    assertThat(store.state()).isEqualTo(initialState);
+
+    store =
+        StoreImpl.create(rootReducer, initialState, mock(Action.class),
+            Collections.singletonList(middleware));
 
     assertThat(store.state()).isEqualTo(initialState);
   }
