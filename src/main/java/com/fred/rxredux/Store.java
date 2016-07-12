@@ -5,15 +5,17 @@ import rx.Subscription;
 
 /**
  * Store contract
+ *
+ * @param <S> State's class
+ * @param <A> Action's class
  */
-public interface Store<S extends State> {
+public interface Store<S extends State, A extends Action> {
   /**
    * Dispatch an action to this store.
    *
    * @param action The action to dispatch
-   * @param <T> The action type's class
    */
-  <T> void dispatch(Action<T> action);
+  void dispatch(A action);
 
   /**
    * Subscribe to the store's state changes.
