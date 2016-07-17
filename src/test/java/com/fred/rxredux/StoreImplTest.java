@@ -27,8 +27,6 @@ import static org.mockito.Mockito.when;
 
 public class StoreImplTest {
   @Mock
-  Action<Integer> initialAction;
-  @Mock
   Reducer<State, Action<Integer>> rootReducer;
   @Mock
   Middleware<State, Action<Integer>> middleware;
@@ -43,7 +41,7 @@ public class StoreImplTest {
 
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
-            initialAction, new ImmediateToImmediateScheduler(),
+            new ImmediateToImmediateScheduler(),
             new ImmediateToImmediateScheduler(), Collections.singletonList(middleware));
     testSubscriber = new TestSubscriber<State>();
     testSubscription = store.subscribe(testSubscriber);
@@ -79,7 +77,7 @@ public class StoreImplTest {
   public void dispatch_shouldStillForwardActionsToRootReducerIfThereAreNoMiddlewares() {
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
-            mock(Action.class), new ImmediateToImmediateScheduler(),
+            new ImmediateToImmediateScheduler(),
             new ImmediateToImmediateScheduler(),
             new ArrayList<Middleware<State, Action<Integer>>>());
 
@@ -93,13 +91,13 @@ public class StoreImplTest {
   public void create_shouldCreateAStoreWithTheGivenInitialState() {
     State initialState = new State();
     Store<State, Action<Integer>> store =
-        StoreImpl.create(rootReducer, initialState, mock(Action.class),
+        StoreImpl.create(rootReducer, initialState,
             new ImmediateToImmediateScheduler());
 
     assertThat(store.state()).isEqualTo(initialState);
 
     store =
-        StoreImpl.create(rootReducer, initialState, mock(Action.class),
+        StoreImpl.create(rootReducer, initialState,
             new ImmediateToImmediateScheduler(),
             Collections.singletonList(middleware));
 
@@ -147,7 +145,7 @@ public class StoreImplTest {
 
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
-            mock(Action.class), new ImmediateToImmediateScheduler(),
+            new ImmediateToImmediateScheduler(),
             new ImmediateToImmediateScheduler(), Arrays.asList(one, two));
 
     store.dispatch(action);
@@ -157,10 +155,5 @@ public class StoreImplTest {
     inOrder.verify(action).setType(123);
     inOrder.verify(action).setType(456);
     inOrder.verify(action).setType(789);
-  }
-
-  @Test
-  public void create_shouldDispatchInitialAction() {
-    verify(rootReducer).reduce(eq(initialAction), anyState());
   }
 }

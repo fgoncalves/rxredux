@@ -32,30 +32,29 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
    * @param <S> State's class
    * @param rootReducer Root reducer
    * @param initialState Initial state for the store
-   * @param initialAction Initial action to dispatch upon subscription
    * @param subscriptionSchedulerTransformer Scheduler transformer for the store subscriptions
    * @param middlewares Middlewares  @return A Store with the given configuration
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
-      S initialState, A initialAction, SchedulerTransformer subscriptionSchedulerTransformer,
+      S initialState, SchedulerTransformer subscriptionSchedulerTransformer,
       List<Middleware<S, A>> middlewares) {
-    return new StoreImpl<S, A>(rootReducer, initialState, initialAction,
+    return new StoreImpl<S, A>(rootReducer, initialState,
         new IOToIOSchedulerTransformer(),
         subscriptionSchedulerTransformer, middlewares);
   }
 
   /**
-   * Same as {@link #create(Reducer, State, Action, SchedulerTransformer, List)} but adds no
+   * Same as {@link #create(Reducer, State, SchedulerTransformer, List)} but adds no
    * middleware
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
-      S initialState, A initialAction, SchedulerTransformer subscriptionSchedulerTransformer) {
-    return new StoreImpl<S, A>(rootReducer, initialState, initialAction,
+      S initialState, SchedulerTransformer subscriptionSchedulerTransformer) {
+    return new StoreImpl<S, A>(rootReducer, initialState,
         new IOToIOSchedulerTransformer(),
         subscriptionSchedulerTransformer, new ArrayList<Middleware<S, A>>());
   }
 
-  public StoreImpl(Reducer<S, A> rootReducer, S initialState, A initialAction,
+  public StoreImpl(Reducer<S, A> rootReducer, S initialState,
       SchedulerTransformer actionStreamSchedulerTransformer,
       SchedulerTransformer subscriptionSchedulerTransformer, List<Middleware<S, A>> middlewares) {
     this.rootReducer = rootReducer;
@@ -63,8 +62,6 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
     this.currentState = initialState;
     this.subscriptionSchedulerTransformer = subscriptionSchedulerTransformer;
     this.middlewares = middlewares;
-
-    dispatch(initialAction);
   }
 
   public void dispatch(final A action) {
