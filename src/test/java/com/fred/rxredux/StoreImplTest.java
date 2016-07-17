@@ -44,7 +44,7 @@ public class StoreImplTest {
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
             initialAction, new ImmediateToImmediateScheduler(),
-            Collections.singletonList(middleware));
+            new ImmediateToImmediateScheduler(), Collections.singletonList(middleware));
     testSubscriber = new TestSubscriber<State>();
     testSubscription = store.subscribe(testSubscriber);
   }
@@ -80,6 +80,7 @@ public class StoreImplTest {
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
             mock(Action.class), new ImmediateToImmediateScheduler(),
+            new ImmediateToImmediateScheduler(),
             new ArrayList<Middleware<State, Action<Integer>>>());
 
     Action<Integer> action = mock(Action.class);
@@ -92,12 +93,14 @@ public class StoreImplTest {
   public void create_shouldCreateAStoreWithTheGivenInitialState() {
     State initialState = new State();
     Store<State, Action<Integer>> store =
-        StoreImpl.create(rootReducer, initialState, mock(Action.class));
+        StoreImpl.create(rootReducer, initialState, mock(Action.class),
+            new ImmediateToImmediateScheduler());
 
     assertThat(store.state()).isEqualTo(initialState);
 
     store =
         StoreImpl.create(rootReducer, initialState, mock(Action.class),
+            new ImmediateToImmediateScheduler(),
             Collections.singletonList(middleware));
 
     assertThat(store.state()).isEqualTo(initialState);
@@ -145,7 +148,7 @@ public class StoreImplTest {
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
             mock(Action.class), new ImmediateToImmediateScheduler(),
-            Arrays.asList(one, two));
+            new ImmediateToImmediateScheduler(), Arrays.asList(one, two));
 
     store.dispatch(action);
 

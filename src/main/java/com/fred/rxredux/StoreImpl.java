@@ -20,43 +20,48 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   private final PublishSubject<S> stateSubject = PublishSubject.create();
   private final List<Middleware<S, A>> middlewares;
   private final Reducer<S, A> rootReducer;
-  private final SchedulerTransformer transformer;
+  private final SchedulerTransformer actionStreamSchedulerTransformer;
+  private final SchedulerTransformer subscriptionSchedulerTransformer;
   private S currentState;
 
   /**
    * Create a store with the default config. This will effectively create a store that will use the
-   * {@link IOToIOSchedulerTransformer io to io transformer} to subscribe and observe the events of
-   * the middlewares
+   * {@link IOToIOSchedulerTransformer io to io actionStreamSchedulerTransformer} to subscribe and
+   * observe the events of the middlewares
    *
    * @param <S> State's class
    * @param rootReducer Root reducer
    * @param initialState Initial state for the store
    * @param initialAction Initial action to dispatch upon subscription
+   * @param subscriptionSchedulerTransformer Scheduler transformer for the store subscriptions
    * @param middlewares Middlewares  @return A Store with the given configuration
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
-      S initialState, A initialAction, List<Middleware<S, A>> middlewares) {
+      S initialState, A initialAction, SchedulerTransformer subscriptionSchedulerTransformer,
+      List<Middleware<S, A>> middlewares) {
     return new StoreImpl<S, A>(rootReducer, initialState, initialAction,
         new IOToIOSchedulerTransformer(),
-        middlewares);
+        subscriptionSchedulerTransformer, middlewares);
   }
 
   /**
-   * Same as {@link #create(Reducer, State, Action, List)} but adds no middleware
+   * Same as {@link #create(Reducer, State, Action, SchedulerTransformer, List)} but adds no
+   * middleware
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
-      S initialState, A initialAction) {
+      S initialState, A initialAction, SchedulerTransformer subscriptionSchedulerTransformer) {
     return new StoreImpl<S, A>(rootReducer, initialState, initialAction,
         new IOToIOSchedulerTransformer(),
-        new ArrayList<Middleware<S, A>>());
+        subscriptionSchedulerTransformer, new ArrayList<Middleware<S, A>>());
   }
 
   public StoreImpl(Reducer<S, A> rootReducer, S initialState, A initialAction,
-      SchedulerTransformer transformer,
-      List<Middleware<S, A>> middlewares) {
+      SchedulerTransformer actionStreamSchedulerTransformer,
+      SchedulerTransformer subscriptionSchedulerTransformer, List<Middleware<S, A>> middlewares) {
     this.rootReducer = rootReducer;
-    this.transformer = transformer;
+    this.actionStreamSchedulerTransformer = actionStreamSchedulerTransformer;
     this.currentState = initialState;
+    this.subscriptionSchedulerTransformer = subscriptionSchedulerTransformer;
     this.middlewares = middlewares;
 
     dispatch(initialAction);
@@ -69,7 +74,7 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
       }
     }).mergeWith(rootReducer.reduce(action, currentState))
         .last()
-        .compose(transformer.<S>applySchedulers())
+        .compose(actionStreamSchedulerTransformer.<S>applySchedulers())
         .subscribe(new Subscriber<S>() {
           public void onCompleted() {
 
@@ -88,7 +93,7 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
 
   public Subscription subscribe(Subscriber<S> stateSubscriber) {
     return stateSubject
-        .compose(transformer.<S>applySchedulers())
+        .compose(subscriptionSchedulerTransformer.<S>applySchedulers())
         .subscribe(stateSubscriber);
   }
 
