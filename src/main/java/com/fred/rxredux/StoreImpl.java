@@ -87,7 +87,9 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   }
 
   public Subscription subscribe(Subscriber<S> stateSubscriber) {
-    return stateSubject.subscribe(stateSubscriber);
+    return stateSubject
+        .compose(transformer.<S>applySchedulers())
+        .subscribe(stateSubscriber);
   }
 
   public S state() {
