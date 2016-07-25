@@ -1,6 +1,6 @@
 package com.fred.rxredux;
 
-import rx.Observable;
+import rx.functions.Func2;
 
 /**
  * Reducer contract
@@ -8,13 +8,5 @@ import rx.Observable;
  * @param <S> State's class
  * @param <A> Action's class
  */
-public interface Reducer<S extends State, A extends Action> {
-  /**
-   * Apply the action to the given current state and return an observable to the changes.
-   *
-   * @param action Action to apply to the current state
-   * @param currentState Current app state
-   * @return Next state
-   */
-  Observable<S> reduce(A action, S currentState);
+public interface Reducer<S extends State, A extends Action> extends Func2<A, S, S> {
 }
