@@ -7,6 +7,8 @@ import java.util.List;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.functions.Func1;
+import rx.functions.Func2;
+import rx.functions.Func3;
 import rx.subjects.PublishSubject;
 
 /**
@@ -16,22 +18,20 @@ import rx.subjects.PublishSubject;
  * @param <A> Action's class
  */
 public class StoreImpl<S extends State, A extends Action> implements Store<S, A> {
-  // Curried dispatcher -> calls root reducer
-  private Func1<A, Func1<S, S>> mainDispatcher = new Func1<A, Func1<S, S>>() {
-    public Func1<S, S> call(final A a) {
-      return new Func1<S, S>() {
-        public S call(S s) {
-          return rootReducer.call(a, s);
-        }
-      };
+  private Middleware<A, S> coreMiddleware = new Middleware<A, S>() {
+    public S call(Store<S, A> store, A action, Dispatch<A, S> dispatch) {
+      return rootReducer.call(action, store.state());
     }
   };
 
   private final PublishSubject<S> stateSubject = PublishSubject.create();
-  private final List<Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>>> middlewares;
   private final Reducer<S, A> rootReducer;
-  private final SchedulerTransformer actionStreamSchedulerTransformer;
   private final SchedulerTransformer subscriptionSchedulerTransformer;
+  private Dispatch<A, S> dispatch = new Dispatch<A, S>() {
+    public S call(A a) {
+      return coreMiddleware.call(StoreImpl.this, a, null);
+    }
+  };
   private S currentState;
 
   /**
@@ -47,9 +47,8 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
       S initialState, SchedulerTransformer subscriptionSchedulerTransformer,
-      List<Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>>> middlewares) {
+      List<Middleware<A, S>> middlewares) {
     return new StoreImpl<S, A>(rootReducer, initialState,
-        new IOToIOSchedulerTransformer(),
         subscriptionSchedulerTransformer, middlewares);
   }
 
@@ -59,25 +58,77 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
       S initialState, SchedulerTransformer subscriptionSchedulerTransformer) {
     return new StoreImpl<S, A>(rootReducer, initialState,
-        new IOToIOSchedulerTransformer(),
         subscriptionSchedulerTransformer,
-        new ArrayList<Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>>>());
+        new ArrayList<Middleware<A, S>>());
   }
 
   public StoreImpl(Reducer<S, A> rootReducer, S initialState,
-      SchedulerTransformer actionStreamSchedulerTransformer,
       SchedulerTransformer subscriptionSchedulerTransformer,
-      List<Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>>> middlewares) {
+      List<Middleware<A, S>> middlewares) {
     this.rootReducer = rootReducer;
-    this.actionStreamSchedulerTransformer = actionStreamSchedulerTransformer;
     this.currentState = initialState;
     this.subscriptionSchedulerTransformer = subscriptionSchedulerTransformer;
-    this.middlewares = middlewares;
+
+    List<Middleware<A, S>> copyMiddlewares = new ArrayList<Middleware<A, S>>(middlewares);
+    copyMiddlewares.add(coreMiddleware);
+    coreMiddleware = Utils.reduceRight(copyMiddlewares,
+        new Utils.ReduceCallbacks<Middleware<A, S>>() {
+          public Middleware<A, S> reduce(final Middleware<A, S> previous,
+              final Middleware<A, S> current) {
+            return new Middleware<A, S>() {
+              public S call(final Store<S, A> store, A action, final Dispatch<A, S> dispatch) {
+                return current.call(store, action, new Dispatch<A, S>() {
+                  public S call(A action) {
+                    return previous.call(store, action, dispatch);
+                  }
+                });
+              }
+            };
+          }
+        });
+
+    List<Func2<Store<S, A>, A, Func1<Dispatch<A, S>, Void>>> curryedMiddlewares =
+        Utils.map(
+            middlewares,
+            new Utils.MapCallbacks<Middleware<A, S>, Func2<Store<S, A>, A, Func1<Dispatch<A, S>, Void>>>() {
+              public Func2<Store<S, A>, A, Func1<Dispatch<A, S>, Void>> map(
+                  final Middleware<A, S> middleware) {
+                return new Func2<Store<S, A>, A, Func1<Dispatch<A, S>, Void>>() {
+                  public Func1<Dispatch<A, S>, Void> call(final Store<S, A> store, final A action) {
+                    return new Func1<Dispatch<A, S>, Void>() {
+                      public Void call(Dispatch<A, S> dispatch) {
+                        middleware.call(store, action, dispatch);
+                      }
+                    };
+                  }
+                };
+              }
+            }
+        );
+
+    Func3<Integer, Integer, Integer, Integer> sum =
+        new Func3<Integer, Integer, Integer, Integer>() {
+          public Integer call(Integer a, Integer b, Integer c) {
+            return a + b + c;
+          }
+        };
+
+    Func2<Integer, Integer, Func1<Integer, Integer>> curryedSum =
+        new Func2<Integer, Integer, Func1<Integer, Integer>>() {
+          public Func1<Integer, Integer> call(final Integer a, final Integer b) {
+            return new Func1<Integer, Integer>() {
+              public Integer call(Integer c) {
+                return a + b + c;
+              }
+            };
+          }
+        };
+
+    curryedSum.call(1, 3).call(4);
   }
 
   public void dispatch(final A action) {
-    // TODO: encapsulate middleware
-    currentState = mainDispatcher.call(action).call(state());
+    currentState = dispatch.call(action);
     stateSubject.onNext(currentState);
   }
 
@@ -89,33 +140,5 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
 
   public S state() {
     return currentState;
-  }
-
-  /**
-   * Compose the different middlewares together with the main dispatcher
-   *
-   * @param toCompose The middlewares to compose
-   * @return The composed function
-   */
-  private Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>> compose(
-      final List<Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>>> toCompose) {
-    if (toCompose.isEmpty()) {
-      throw new IllegalStateException("Compose cannot be called with an empty list");
-    }
-
-    Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>> result = toCompose.get(0);
-
-    if (toCompose.size() == 1) return result;
-
-    for (final Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>> func : toCompose) {
-      final Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>> finalResult = result;
-      result = new Func1<Func1<A, Func1<S, S>>, Func1<A, Func1<S, S>>>() {
-        public Func1<A, Func1<S, S>> call(Func1<A, Func1<S, S>> next) {
-          return func.call(finalResult.call(next));
-        }
-      };
-    }
-
-    return result;
   }
 }

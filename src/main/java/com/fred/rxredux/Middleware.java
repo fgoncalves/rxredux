@@ -1,10 +1,10 @@
 package com.fred.rxredux;
 
-import rx.functions.Func2;
+import rx.functions.Func3;
 
 /**
  * Middleware contract
  */
-public interface Middleware<S extends State, A extends Action>
-    extends Func2<A, Middleware<S, A>, Middleware<S, A>> {
+public interface Middleware<A extends Action, S extends State>
+    extends Func3<Store<S, A>, A, Dispatch<A, S>, S> {
 }
