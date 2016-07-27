@@ -1,6 +1,7 @@
 package com.fred.rxredux.testhelpers.mockito;
 
 import com.fred.rxredux.Action;
+import com.fred.rxredux.Dispatch;
 import com.fred.rxredux.State;
 import com.fred.rxredux.Store;
 import org.mockito.ArgumentMatcher;
@@ -33,6 +34,10 @@ public class ExtendedMatchers {
 
   public static Action anyAction() {
     return any(Action.class);
+  }
+
+  public static Dispatch anyDispatch() {
+    return any(Dispatch.class);
   }
 
   private static class InstanceOfSubscriptionMatcher implements ArgumentMatcher<Subscription> {
