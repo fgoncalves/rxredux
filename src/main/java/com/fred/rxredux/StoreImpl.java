@@ -20,7 +20,9 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   private final SchedulerTransformer subscriptionSchedulerTransformer;
   private Dispatch<A, S> coreDispatch = new Dispatch<A, S>() {
     public S call(A action) {
-      return rootReducer.call(action, state());
+      currentState = rootReducer.call(action, state());
+      stateSubject.onNext(currentState);
+      return currentState;
     }
   };
   private S currentState;
@@ -79,8 +81,7 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   }
 
   public void dispatch(final A action) {
-    currentState = coreDispatch.call(action);
-    stateSubject.onNext(currentState);
+    coreDispatch.call(action);
   }
 
   public Subscription subscribe(Subscriber<S> stateSubscriber) {

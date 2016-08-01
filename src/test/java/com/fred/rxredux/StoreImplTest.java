@@ -1,10 +1,13 @@
 package com.fred.rxredux;
 
 import com.fred.rxredux.testhelpers.ImmediateToImmediateScheduler;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
@@ -17,6 +20,7 @@ import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyDispatch;
 import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyState;
 import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyStore;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,20 +73,23 @@ public class StoreImplTest {
       }
     });
 
+    store.dispatch(new Action<Integer>(2));
+
     verify(rootReducer).call(anyAction(), anyState());
   }
 
   @Test
   public void dispatch_shouldStillForwardActionsToRootReducerIfThereAreNoMiddlewares() {
-    //store =
-    //    new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
-    //        new ImmediateToImmediateScheduler(),
-    //        new ArrayList<Middleware<State, Action<Integer>>>());
-    //
-    //Action<Integer> action = mock(Action.class);
-    //store.dispatch(action);
-    //
-    //verify(rootReducer).reduce(action, store.state());
+    State state = mock(State.class);
+    store =
+        new StoreImpl<State, Action<Integer>>(rootReducer, state,
+            new ImmediateToImmediateScheduler(),
+            new ArrayList<Middleware<Action<Integer>, State>>());
+
+    Action<Integer> action = mock(Action.class);
+    store.dispatch(action);
+
+    verify(rootReducer).call(action, state);
   }
 
   @Test
@@ -104,53 +111,42 @@ public class StoreImplTest {
 
   @Test
   public void dispatch_shouldInvokeMiddlewaresInOrderOfAdditionAndThenTheRootReducer() {
-    //Action<Integer> action = mock(Action.class);
-    //Middleware<State, Action<Integer>> one = new Middleware<State, Action<Integer>>() {
-    //  public Observable<State> apply(Store<State, Action<Integer>> store, final State currentState,
-    //      final Action<Integer> action) {
-    //    return Observable.create(new Observable.OnSubscribe<State>() {
-    //      public void call(Subscriber<? super State> subscriber) {
-    //        action.setType(123);
-    //        subscriber.onNext(currentState);
-    //        subscriber.onCompleted();
-    //      }
-    //    });
-    //  }
-    //};
-    //Middleware<State, Action<Integer>> two = new Middleware<State, Action<Integer>>() {
-    //  public Observable<State> apply(Store<State, Action<Integer>> store, final State currentState,
-    //      final Action<Integer> action) {
-    //    return Observable.create(new Observable.OnSubscribe<State>() {
-    //      public void call(Subscriber<? super State> subscriber) {
-    //        action.setType(456);
-    //        subscriber.onNext(currentState);
-    //        subscriber.onCompleted();
-    //      }
-    //    });
-    //  }
-    //};
-    //rootReducer = new Reducer<State, Action<Integer>>() {
-    //  public Observable<State> reduce(final Action<Integer> action, final State currentState) {
-    //    return Observable.create(new Observable.OnSubscribe<State>() {
-    //      public void call(Subscriber<? super State> subscriber) {
-    //        action.setType(789);
-    //        subscriber.onNext(currentState);
-    //        subscriber.onCompleted();
-    //      }
-    //    });
-    //  }
-    //};
-    //
-    //store =
-    //    new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
-    //        new ImmediateToImmediateScheduler(), Arrays.asList(one, two));
-    //
-    //store.dispatch(action);
-    //
-    //InOrder inOrder = inOrder(action);
-    //
-    //inOrder.verify(action).setType(123);
-    //inOrder.verify(action).setType(456);
-    //inOrder.verify(action).setType(789);
+    final Action<Integer> action = mock(Action.class);
+    Middleware<Action<Integer>, State> one = new Middleware<Action<Integer>, State>() {
+      public State call(Store<State, Action<Integer>> stateActionStore,
+          Action<Integer> integerAction,
+          Dispatch<Action<Integer>, State> next) {
+        action.setType(123);
+        next.call(integerAction);
+        return null;
+      }
+    };
+    Middleware<Action<Integer>, State> two = new Middleware<Action<Integer>, State>() {
+      public State call(Store<State, Action<Integer>> stateActionStore,
+          Action<Integer> integerAction,
+          Dispatch<Action<Integer>, State> next) {
+        action.setType(456);
+        next.call(integerAction);
+        return null;
+      }
+    };
+    rootReducer = new Reducer<State, Action<Integer>>() {
+      public State call(Action<Integer> integerAction, State state) {
+        action.setType(789);
+        return state;
+      }
+    };
+
+    store =
+        new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
+            new ImmediateToImmediateScheduler(), Arrays.asList(one, two));
+
+    store.dispatch(action);
+
+    InOrder inOrder = inOrder(action);
+
+    inOrder.verify(action).setType(123);
+    inOrder.verify(action).setType(456);
+    inOrder.verify(action).setType(789);
   }
 }
