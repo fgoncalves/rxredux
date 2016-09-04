@@ -81,7 +81,9 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   }
 
   public void dispatch(final A action) {
-    coreDispatch.call(action);
+    synchronized (this) {
+      coreDispatch.call(action);
+    }
   }
 
   public Subscription subscribe(Subscriber<S> stateSubscriber) {
