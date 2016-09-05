@@ -33,10 +33,12 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
    * observe the events of the middlewares
    *
    * @param <S> State's class
+   * @param <A> Action's class
    * @param rootReducer Root reducer
    * @param initialState Initial state for the store
    * @param subscriptionSchedulerTransformer Scheduler transformer for the store subscriptions
    * @param middlewares Middlewares  @return A Store with the given configuration
+   * @return A store configured with the given parameters
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
       S initialState, SchedulerTransformer subscriptionSchedulerTransformer,
@@ -47,6 +49,14 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
 
   /**
    * Same as {@link #create(Reducer, State, SchedulerTransformer, List)} but adds no middleware
+   *
+   * @param <S> State's class
+   * @param <A> Action's class
+   * @param rootReducer Root reducer
+   * @param initialState Initial state for the store
+   * @param subscriptionSchedulerTransformer Scheduler transformer for the store subscriptions
+   * @return A store configured with the given parameters
+   * @see #create(Reducer, State, SchedulerTransformer, List)
    */
   public static <S extends State, A extends Action> Store<S, A> create(Reducer<S, A> rootReducer,
       S initialState, SchedulerTransformer subscriptionSchedulerTransformer) {
