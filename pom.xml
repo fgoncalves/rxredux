@@ -7,6 +7,9 @@
   <groupId>com.fgoncalves</groupId>
   <artifactId>rxredux</artifactId>
   <version>0.1.0</version>
+  <name>RxRedux</name>
+  <description>An implementation of the Redux architecture built using RxJava</description>
+  <url>https://github.com/fgoncalves/rxredux</url>
 
   <reporting>
     <plugins>
