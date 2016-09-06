@@ -37,5 +37,27 @@ Use the store's dispatch method to dispatch the actions.
 
 ## Middleware
 
+Redux middlewares can be implemented by extending the interface middleware. This is simply a Rx Func3
+which receives a store, an action and the next dispatch function in the middleware chain.
+
+If the chain should not proceed, then the next dispatch function should not be called. Otherwise,
+you should just call the next dispatch function and return the state.
 
 ## More info
+
+
+## License
+
+    Copyright 2013 Frederico Gonçalves
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
