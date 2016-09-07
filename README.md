@@ -1,6 +1,7 @@
 # RxRedux
 
-[ ![Codeship Status for fgoncalves/rxredux](https://codeship.com/projects/a8dab640-569b-0134-6589-3673ae8df907/status?branch=master)](https://codeship.com/projects/172363)
+[ ![Codeship Status for fgoncalves/rxredux](https://codeship.com/projects/a8dab640-569b-0134-6589-3673ae8df907/status?branch=master)](https://codeship.com/projects/172363) [![codecov](https://codecov.io/gh/fgoncalves/rxredux/branch/master/graph/badge.svg)](https://codecov.io/gh/fgoncalves/rxredux)
+
 
 A simple implementation of the redux architecture in Java taking advantage of
 [RxJava](https://github.com/ReactiveX/RxJava).
