@@ -46,6 +46,21 @@ which receives a store, an action and the next dispatch function in the middlewa
 If the chain should not proceed, then the next dispatch function should not be called. Otherwise,
 you should just call the next dispatch function and return the state.
 
+## Download
+
+Download via Maven:
+```xml
+<dependency>
+  <groupId>com.github.fgoncalves</groupId>
+  <artifactId>rxredux</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+or Gradle:
+```groovy
+compile 'com.github.fgoncalves:rxredux:0.1.0'
+```
+
 ## More info
 
 
