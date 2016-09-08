@@ -63,6 +63,8 @@ compile 'com.github.fgoncalves:rxredux:0.1.0'
 
 ## More info
 
+[Here](https://github.com/fgoncalves/rxredux-demos) are several examples of how the library can be
+used in Android apps.
 
 ## License
 
