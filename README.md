@@ -2,7 +2,6 @@
 
 [ ![Codeship Status for fgoncalves/rxredux](https://codeship.com/projects/a8dab640-569b-0134-6589-3673ae8df907/status?branch=master)](https://codeship.com/projects/172363) [![codecov](https://codecov.io/gh/fgoncalves/rxredux/branch/master/graph/badge.svg)](https://codecov.io/gh/fgoncalves/rxredux)
 
-
 A simple implementation of the redux architecture in Java taking advantage of
 [RxJava](https://github.com/ReactiveX/RxJava).
 
@@ -10,6 +9,8 @@ The library itself does not guarantee all the redux core concepts. Specifically 
 of the state is quite complex to guarantee since there's no built in support for it in the
 language. Moreover, the state classes are defined by whoever wants to use the library.
 Therefore, it's up to the developer to decide if he/she wants to ensure immutability.
+
+[switch to the rxjava1 branch](https://github.com/fgoncalves/rxredux/tree/rxjava1)
 
 ## Actions
 

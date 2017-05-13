@@ -2,11 +2,11 @@ package com.fred.rxredux;
 
 import com.fred.rxredux.transformers.IOToIOSchedulerTransformer;
 import com.fred.rxredux.transformers.SchedulerTransformer;
+import io.reactivex.Observer;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.subjects.PublishSubject;
 import java.util.ArrayList;
 import java.util.List;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.subjects.PublishSubject;
 
 /**
  * Store implementation for the default store
@@ -19,8 +19,8 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
   private final Reducer<S, A> rootReducer;
   private final SchedulerTransformer subscriptionSchedulerTransformer;
   private Dispatch<A, S> coreDispatch = new Dispatch<A, S>() {
-    public S call(A action) {
-      currentState = rootReducer.call(action, state());
+    public S apply(@NonNull A action) throws Exception {
+      currentState = rootReducer.apply(action, state());
       stateSubject.onNext(currentState);
       return currentState;
     }
@@ -82,23 +82,23 @@ public class StoreImpl<S extends State, A extends Action> implements Store<S, A>
       final Middleware<A, S> middleware = middlewares.get(i);
       final Dispatch<A, S> next = dispatchers.get(0);
       dispatchers.add(0, new Dispatch<A, S>() {
-        public S call(A a) {
-          return middleware.call(StoreImpl.this, a, next);
+        public S apply(@NonNull A a) throws Exception {
+          return middleware.apply(StoreImpl.this, a, next);
         }
       });
     }
     return dispatchers.get(0);
   }
 
-  public void dispatch(final A action) {
+  public void dispatch(final A action) throws Exception {
     synchronized (this) {
-      coreDispatch.call(action);
+      coreDispatch.apply(action);
     }
   }
 
-  public Subscription subscribe(Subscriber<S> stateSubscriber) {
-    return stateSubject
-        .compose(subscriptionSchedulerTransformer.<S>applySchedulers())
+  public void subscribe(Observer<S> stateSubscriber) {
+    stateSubject
+        .compose(subscriptionSchedulerTransformer.<S>applyObservableSchedulers())
         .subscribe(stateSubscriber);
   }
 

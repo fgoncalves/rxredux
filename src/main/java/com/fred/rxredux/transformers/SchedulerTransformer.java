@@ -1,6 +1,6 @@
 package com.fred.rxredux.transformers;
 
-import rx.Observable;
+import io.reactivex.ObservableTransformer;
 
 /**
  * A scheduler transformer is an rx transformer that changes the stream schedulers to other
@@ -11,5 +11,5 @@ import rx.Observable;
  */
 public interface SchedulerTransformer {
 
-  <T> Observable.Transformer<T, T> applySchedulers();
+  <T> ObservableTransformer<T, T> applyObservableSchedulers();
 }

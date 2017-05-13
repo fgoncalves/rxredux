@@ -1,7 +1,6 @@
 package com.fred.rxredux;
 
-import rx.Subscriber;
-import rx.Subscription;
+import io.reactivex.Observer;
 
 /**
  * Store contract
@@ -15,15 +14,15 @@ public interface Store<S extends State, A extends Action> {
    *
    * @param action The action to dispatch
    */
-  void dispatch(A action);
+  void dispatch(A action) throws Exception;
 
   /**
-   * Subscribe to the store's state changes.
+   * Subscribe to the store's state changes. To unsubscribe simply dispose of the disposable
+   * received by the state subscriber.
    *
    * @param stateSubscriber The state subscriber that will be notified once the state changes
-   * @return The subscription so the client can unsubscribe
    */
-  Subscription subscribe(Subscriber<S> stateSubscriber);
+  void subscribe(Observer<S> stateSubscriber);
 
   /**
    * Get the store's current state

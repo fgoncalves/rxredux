@@ -1,6 +1,7 @@
 package com.fred.rxredux;
 
 import com.fred.rxredux.testhelpers.ImmediateToImmediateScheduler;
+import io.reactivex.observers.TestObserver;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,8 +13,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import rx.Subscription;
-import rx.observers.TestSubscriber;
 
 import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyAction;
 import static com.fred.rxredux.testhelpers.mockito.ExtendedMatchers.anyDispatch;
@@ -31,8 +30,7 @@ public class StoreImplTest {
   @Mock
   Middleware<Action<Integer>, State> middleware;
 
-  private TestSubscriber<State> testSubscriber;
-  private Subscription testSubscription;
+  private TestObserver<State> testObserver;
   private Store<State, Action<Integer>> store;
 
   @Before
@@ -42,18 +40,18 @@ public class StoreImplTest {
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, mock(State.class),
             new ImmediateToImmediateScheduler(), Collections.singletonList(middleware));
-    testSubscriber = new TestSubscriber<State>();
-    testSubscription = store.subscribe(testSubscriber);
+    testObserver = new TestObserver<State>();
+    store.subscribe(testObserver);
   }
 
   @After
   public void tearDown() throws Exception {
-    testSubscription.unsubscribe();
+    testObserver.dispose();
   }
 
   @Test
-  public void dispatch_shouldNotForwardEventsIfMiddlewareCompletesTheStream() {
-    when(middleware.call(anyStore(), anyAction(), anyDispatch())).then(new Answer<Integer>() {
+  public void dispatch_shouldNotForwardEventsIfMiddlewareCompletesTheStream() throws Exception {
+    when(middleware.apply(anyStore(), anyAction(), anyDispatch())).then(new Answer<Integer>() {
       public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
         // avoid calling the next middleware
         return null;
@@ -61,25 +59,26 @@ public class StoreImplTest {
     });
     store.dispatch(mock(Action.class));
 
-    testSubscriber.assertNoValues();
+    testObserver.assertNoValues();
   }
 
   @Test
-  public void dispatch_shouldForwardActionsToReducerAfterMiddlewareRan() {
-    when(middleware.call(anyStore(), anyAction(), anyDispatch())).then(new Answer<Integer>() {
+  public void dispatch_shouldForwardActionsToReducerAfterMiddlewareRan() throws Exception {
+    when(middleware.apply(anyStore(), anyAction(), anyDispatch())).then(new Answer<Integer>() {
       public Integer answer(InvocationOnMock invocationOnMock) throws Throwable {
-        ((Dispatch) invocationOnMock.getArguments()[2]).call(new Action<Integer>(1));
+        ((Dispatch) invocationOnMock.getArguments()[2]).apply(new Action<Integer>(1));
         return null;
       }
     });
 
     store.dispatch(new Action<Integer>(2));
 
-    verify(rootReducer).call(anyAction(), anyState());
+    verify(rootReducer).apply(anyAction(), anyState());
   }
 
   @Test
-  public void dispatch_shouldStillForwardActionsToRootReducerIfThereAreNoMiddlewares() {
+  public void dispatch_shouldStillForwardActionsToRootReducerIfThereAreNoMiddlewares()
+      throws Exception {
     State state = mock(State.class);
     store =
         new StoreImpl<State, Action<Integer>>(rootReducer, state,
@@ -89,7 +88,7 @@ public class StoreImplTest {
     Action<Integer> action = mock(Action.class);
     store.dispatch(action);
 
-    verify(rootReducer).call(action, state);
+    verify(rootReducer).apply(action, state);
   }
 
   @Test
@@ -110,28 +109,29 @@ public class StoreImplTest {
   }
 
   @Test
-  public void dispatch_shouldInvokeMiddlewaresInOrderOfAdditionAndThenTheRootReducer() {
+  public void dispatch_shouldInvokeMiddlewaresInOrderOfAdditionAndThenTheRootReducer()
+      throws Exception {
     final Action<Integer> action = mock(Action.class);
     Middleware<Action<Integer>, State> one = new Middleware<Action<Integer>, State>() {
-      public State call(Store<State, Action<Integer>> stateActionStore,
+      public State apply(Store<State, Action<Integer>> stateActionStore,
           Action<Integer> integerAction,
-          Dispatch<Action<Integer>, State> next) {
+          Dispatch<Action<Integer>, State> next) throws Exception {
         action.setType(123);
-        next.call(integerAction);
+        next.apply(integerAction);
         return null;
       }
     };
     Middleware<Action<Integer>, State> two = new Middleware<Action<Integer>, State>() {
-      public State call(Store<State, Action<Integer>> stateActionStore,
+      public State apply(Store<State, Action<Integer>> stateActionStore,
           Action<Integer> integerAction,
-          Dispatch<Action<Integer>, State> next) {
+          Dispatch<Action<Integer>, State> next) throws Exception {
         action.setType(456);
-        next.call(integerAction);
+        next.apply(integerAction);
         return null;
       }
     };
     rootReducer = new Reducer<State, Action<Integer>>() {
-      public State call(Action<Integer> integerAction, State state) {
+      public State apply(Action<Integer> integerAction, State state) {
         action.setType(789);
         return state;
       }
