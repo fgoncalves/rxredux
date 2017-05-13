@@ -4,8 +4,8 @@ import com.fred.rxredux.Action;
 import com.fred.rxredux.Dispatch;
 import com.fred.rxredux.State;
 import com.fred.rxredux.Store;
+import io.reactivex.disposables.Disposable;
 import org.mockito.ArgumentMatcher;
-import rx.Subscription;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
@@ -17,8 +17,8 @@ public class ExtendedMatchers {
   /**
    * Match any argument of the type subscription
    */
-  public static Subscription anySubscription() {
-    return argThat(new InstanceOfSubscriptionMatcher());
+  public static Disposable anySubscription() {
+    return argThat(new InstanceOfDisposableMatcher());
   }
 
   /**
@@ -40,9 +40,9 @@ public class ExtendedMatchers {
     return any(Dispatch.class);
   }
 
-  private static class InstanceOfSubscriptionMatcher implements ArgumentMatcher<Subscription> {
-    public boolean matches(Subscription argument) {
-      return argument != null && Subscription.class.isAssignableFrom(argument.getClass());
+  private static class InstanceOfDisposableMatcher implements ArgumentMatcher<Disposable> {
+    public boolean matches(Disposable argument) {
+      return argument != null && Disposable.class.isAssignableFrom(argument.getClass());
     }
   }
 

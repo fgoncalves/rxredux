@@ -1,6 +1,6 @@
 package com.fred.rxredux;
 
-import rx.functions.Func2;
+import io.reactivex.functions.BiFunction;
 
 /**
  * Reducer contract
@@ -8,5 +8,5 @@ import rx.functions.Func2;
  * @param <S> State's class
  * @param <A> Action's class
  */
-public interface Reducer<S extends State, A extends Action> extends Func2<A, S, S> {
+public interface Reducer<S extends State, A extends Action> extends BiFunction<A, S, S> {
 }

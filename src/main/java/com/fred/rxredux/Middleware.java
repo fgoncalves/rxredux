@@ -1,10 +1,10 @@
 package com.fred.rxredux;
 
-import rx.functions.Func3;
+import io.reactivex.functions.Function3;
 
 /**
  * Middleware contract
  */
 public interface Middleware<A extends Action, S extends State>
-    extends Func3<Store<S, A>, A, Dispatch<A, S>, S> {
+    extends Function3<Store<S, A>, A, Dispatch<A, S>, S> {
 }
