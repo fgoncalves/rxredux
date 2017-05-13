@@ -54,12 +54,12 @@ Download via Maven:
 <dependency>
   <groupId>com.github.fgoncalves</groupId>
   <artifactId>rxredux</artifactId>
-  <version>0.1.0</version>
+  <version>${latest_version}</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'com.github.fgoncalves:rxredux:0.1.0'
+compile 'com.github.fgoncalves:rxredux:${latest_version}'
 ```
 
 ## More info
